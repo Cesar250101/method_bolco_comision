@@ -1,0 +1,64 @@
+<odoo>
+  <data>
+      <!-- model.name inherit form view -->
+      <record id="method_bolco_comision.product_template_only_form_view" model="ir.ui.view">
+        <field name="name">method.bolco.comision.product.template.only.form.view</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+          <xpath expr="//field[@name='barcode']" position="after">
+              <field name="producto_origen" required="1"/>
+          </xpath>
+        </field>
+      </record>
+
+  <!-- model.name tree view -->
+  <record id="method_bolco_comision.comision_procenteje_tree_view" model="ir.ui.view">
+    <field name="name">method.bolco.comision.comision.procenteje.tree.view</field>
+    <field name="model">method_bolco_comision.por_comision</field>
+    <field name="arch" type="xml">
+      <tree>
+              <field name="producto_origen"/>
+              <field name="comision_porcentaje"/>
+              <field name="comision_haber"/>
+      </tree>
+    </field>
+  </record>
+
+
+  <!-- model.name form view -->
+  <record id="method_bolco_comision.comision_procenteje_form_view" model="ir.ui.view">
+    <field name="name">method.bolco.comision.comision.procenteje.form.view</field>
+    <field name="model">method_bolco_comision.por_comision</field>
+    <field name="arch" type="xml">
+      <form string="">
+            <group string="Porcentajes de Comisión"> 
+              <group string="Origen">
+                <field name="producto_origen"/>
+                <field name="comision_porcentaje"/>
+                <field name="comision_haber"/>
+                
+                </group>
+            </group>
+      </form>
+    </field>
+  </record>
+
+
+  <record id="method_bolco_comision.action_comision" model="ir.actions.act_window">
+            <field name="name">Porcentajes de Comisión</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">method_bolco_comision.por_comision</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>  
+            <field name="domain">[(1,'=', 1)]</field>      
+  </record>
+
+
+
+  <menuitem id="method_bolco_comision" name="Comisión de Venta" parent="sale.menu_sale_config" sequence="1"/>
+  <menuitem id="method_bolco_comision_porcentajes" name="Porcentajes de Comisión" parent="method_bolco_comision" action="method_bolco_comision.action_comision" sequence="1"/>
+
+
+  </data>
+</odoo>
