@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, date, time, timedelta
+from calendar import month
+from datetime import datetime, timedelta
 from odoo import models, fields, api
 
 
@@ -20,8 +21,6 @@ class PorcComision(models.Model):
     comision_haber = fields.Many2one(comodel_name='hr.salary.rule', string='Haber Nómina')
     
     
-
-
 class Nomina(models.Model):
     _inherit = 'hr.payslip'
 
@@ -29,8 +28,13 @@ class Nomina(models.Model):
     @api.one
     def compute_sheet(self):
         contrato_id = self.env['hr.contract'].search([('employee_id', '=', self.employee_id.id), ('state', '=', 'open')])
-        fecha_desde = str(self.date_from)
+        mes_anterior=self.get_created_after_date(self.date_to,45)
+        fecha_desde = str(mes_anterior)
+        fecha_desde=fecha_desde[:8]
+        fecha_desde+="16"
         fecha_hasta = str(self.date_to)
+        fecha_hasta=fecha_hasta[:8]
+        fecha_hasta+="15"
         hastaStr = datetime.strptime(fecha_hasta, '%Y-%m-%d')
         desdeStr = datetime.strptime(fecha_desde, '%Y-%m-%d')
         comision = 0
@@ -65,3 +69,7 @@ class Nomina(models.Model):
         payslip.write({'amount': comision})
         return super(Nomina, self).compute_sheet()
 
+    @api.model
+    def get_created_after_date(self,fecha_actual,days):
+        created_after = (fecha_actual - timedelta(days=days)).isoformat()
+        return created_after

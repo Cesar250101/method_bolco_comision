@@ -14,12 +14,14 @@ class ComisionesReport(models.Model):
     sii_document_number = fields.Integer(string='Nro Docto',readonly=True,)
     document_number = fields.Integer(string="Rut",readonly=True,)
     partner_id = fields.Many2one(comodel_name='res.partner', string='Cliente')    
-    product_id = fields.Many2one('product.product',string='Producto',readonly=True,)
-    product_tmpl_id= fields.Many2one('product.template',string='Plantilla Producto',readonly=True,)
+    product_id = fields.Many2one(comodel_name='product.product',string='Producto',readonly=True,)
+    product_tmpl_id= fields.Many2one(comodel_name='product.template',string='Plantilla Producto',readonly=True,)
     quantity = fields.Integer(string='Cantidad')    
     producto_origen = fields.Char(string='Origen Producto')    
     price_subtotal = fields.Integer(string='Neto',readonly=True,)
-    user_id=fields.Many2one('res.user',string="Usuario")
+    vendedor = fields.Char(string='Vendedor')
+    tipo_documento = fields.Char(string='Tipo Documento')
+    
 
 
 
@@ -29,18 +31,28 @@ class ComisionesReport(models.Model):
         tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute("""
             CREATE OR REPLACE VIEW %s AS (select 
-            ROW_NUMBER() OVER() AS id,ai.date_invoice ,ai.number,ai.sii_document_number,rp.document_number ,
-            rp.id as partner_id,pp.id as product_id,pt.id as product_tmpl_id,
-                    ail.quantity,pt.producto_origen ,ail.price_subtotal,ru.id as user_id
-                    from account_invoice ai ,
-                    account_invoice_line ail ,product_product pp ,product_template pt ,res_users ru,
-                    res_partner rp, res_partner rp2  
-                    where ai.id=ail.invoice_id 
-                    and ail.product_id =pp.id 
-                    and pp.product_tmpl_id =pt.id 
-                    and ai.user_id =ru.id 
-                    and ai.partner_id =rp.id 
-                    and ru.partner_id =rp2.id                
+                ROW_NUMBER() OVER() AS id,
+                ai.date_invoice as date_invoice ,
+                ai.number as number,
+                ai.sii_document_number as sii_document_number,
+                rp.document_number as document_number,
+                rp.id as partner_id,
+                pp.id as product_id,
+                pt.id as product_tmpl_id,
+                ail.quantity as quantity,
+                pt.producto_origen as producto_origen ,
+                case when ai.sii_code =61 then ail.price_subtotal*-1 else ail.price_subtotal end  as price_subtotal,
+                rp2.name as vendedor,sdc.name as tipo_documento
+                from account_invoice ai ,account_invoice_line ail,product_product pp,product_template pt,res_users ru,
+                res_partner rp,res_partner rp2,sii_document_class sdc 
+                where ai.id=ail.invoice_id 
+                and ail.product_id =pp.id 
+                and pp.product_tmpl_id =pt.id 
+                and ai.user_id =ru.id 
+                and ai.partner_id =rp.id 
+                and ru.partner_id =rp2.id 
+                and ai.document_class_id =sdc.id
+                and ai.sii_code in('33','34','56','39','61')    
             )
         """ % (
             self._table
