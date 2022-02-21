@@ -46,25 +46,33 @@ class Nomina(models.Model):
                 ('type','=','out_invoice'),
                 ('sii_code','in',['33','34','56','39','61'])
             ]
+        diario_cheques=self.env['account.journal'].search([('name','=','Cheques en Cartera')]).id
+
+        domain_pagos=[
+            ('payment_date','>=',fecha_desde),
+            ('payment_date','<=',fecha_hasta),
+            ('journal_id','!=',diario_cheques)
+        ]
         porc_nacional=self.env['method_bolco_comision.por_comision'].search([('producto_origen','=','nacional')],limit=1)
         porc_importado=self.env['method_bolco_comision.por_comision'].search([('producto_origen','=','importado')],limit=1)
 
         porc_nacional=porc_nacional.comision_porcentaje/100
         porc_importado=porc_importado.comision_porcentaje/100
 
-        facturas = self.env['account.invoice'].search(domain)
-        for f in facturas:
-            for fl in f.invoice_line_ids:
-                if fl.product_id.product_tmpl_id.producto_origen=='nacional':
-                    if fl.invoice_id.sii_code==61:
-                        comision+=round(fl.price_subtotal*porc_nacional)*-1
+        pagos=self.env['account.payment'].search(domain_pagos)
+        for p in pagos:
+            for f in p.invoice_ids:
+                for fl in f.invoice_line_ids:
+                    if fl.product_id.product_tmpl_id.producto_origen=='nacional':
+                        if fl.invoice_id.sii_code==61:
+                            comision+=round(fl.price_subtotal*porc_nacional)*-1
+                        else:
+                            comision+=round(fl.price_subtotal*porc_nacional)
                     else:
-                        comision+=round(fl.price_subtotal*porc_nacional)
-                else:
-                    if fl.invoice_id.sii_code==61:
-                        comision+=round(fl.price_subtotal*porc_importado)*-1
-                    else:
-                        comision+=round(fl.price_subtotal*porc_importado)
+                        if fl.invoice_id.sii_code==61:
+                            comision+=round(fl.price_subtotal*porc_importado)*-1
+                        else:
+                            comision+=round(fl.price_subtotal*porc_importado)
         payslip = self.env['hr.payslip.input'].search([('code', '=', 'COMI'),('contract_id','=',contrato_id.id),('payslip_id','=',self.id)])
         payslip.write({'amount': comision})
         return super(Nomina, self).compute_sheet()

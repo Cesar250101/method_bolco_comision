@@ -21,7 +21,7 @@ class ComisionesReport(models.Model):
     price_subtotal = fields.Integer(string='Neto',readonly=True,)
     vendedor = fields.Char(string='Vendedor')
     tipo_documento = fields.Char(string='Tipo Documento')
-    
+    pago = fields.Char(string='Pago')
 
 
 
@@ -32,7 +32,7 @@ class ComisionesReport(models.Model):
         self._cr.execute("""
             CREATE OR REPLACE VIEW %s AS (select 
                 ROW_NUMBER() OVER() AS id,
-                ai.date_invoice as date_invoice ,
+                ap.payment_date  as date_invoice ,
                 ai.number as number,
                 ai.sii_document_number as sii_document_number,
                 rp.document_number as document_number,
@@ -42,17 +42,20 @@ class ComisionesReport(models.Model):
                 ail.quantity as quantity,
                 pt.producto_origen as producto_origen ,
                 case when ai.sii_code =61 then ail.price_subtotal*-1 else ail.price_subtotal end  as price_subtotal,
-                rp2.name as vendedor,sdc.name as tipo_documento
+                rp2.name as vendedor,sdc.name as tipo_documento,
+                ap.name as pago
                 from account_invoice ai ,account_invoice_line ail,product_product pp,product_template pt,res_users ru,
-                res_partner rp,res_partner rp2,sii_document_class sdc 
+                res_partner rp,res_partner rp2,sii_document_class sdc,account_invoice_payment_rel aipr,account_payment ap  
                 where ai.id=ail.invoice_id 
+                and ai.id=aipr.invoice_id 
+                and aipr.payment_id =ap.id 
                 and ail.product_id =pp.id 
                 and pp.product_tmpl_id =pt.id 
                 and ai.user_id =ru.id 
                 and ai.partner_id =rp.id 
                 and ru.partner_id =rp2.id 
                 and ai.document_class_id =sdc.id
-                and ai.sii_code in('33','34','56','39','61')    
+                and ai.sii_code in('33','34','56','39','61')     
             )
         """ % (
             self._table
