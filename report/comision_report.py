@@ -56,6 +56,31 @@ class ComisionesReport(models.Model):
                 and ru.partner_id =rp2.id 
                 and ai.document_class_id =sdc.id
                 and ai.sii_code in('33','34','56','39','61')     
+                union
+                select ROW_NUMBER() OVER() AS id,
+                ai.date_invoice  as date_invoice ,
+                ai.number as number,
+                ai.sii_document_number as sii_document_number,
+                rp.document_number as document_number,
+                rp.id as partner_id,
+                pp.id as product_id,
+                pt.id as product_tmpl_id,
+                ail.quantity as quantity,
+                pt.producto_origen as producto_origen ,
+                case when ai.sii_code =61 then ail.price_subtotal*-1 else ail.price_subtotal end  as price_subtotal,
+                rp2.name as vendedor,sdc.name as tipo_documento,
+                'SinPago' as pago
+                from account_invoice ai ,account_invoice_line ail,product_product pp,product_template pt,res_users ru,
+                res_partner rp,res_partner rp2,sii_document_class sdc  
+                where ai.id=ail.invoice_id 
+                and ail.product_id =pp.id 
+                and pp.product_tmpl_id =pt.id 
+                and ai.user_id =ru.id 
+                and ai.partner_id =rp.id 
+                and ru.partner_id =rp2.id 
+                and ai.document_class_id =sdc.id
+                and ai.sii_code in('56','61')
+
             )
         """ % (
             self._table
