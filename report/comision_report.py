@@ -105,7 +105,7 @@ class ComisionesReport(models.Model):
     price_subtotal = fields.Integer(string='Neto',readonly=True,)
     vendedor = fields.Char(string='Vendedor')
     tipo_documento = fields.Char(string='Tipo Documento')
-
+    journal_id = fields.Many2one(comodel_name='comodel_name', string='Diario')
 
 
     @api.model_cr
@@ -125,17 +125,19 @@ class ComisionesReport(models.Model):
                 ail.quantity as quantity,
                 pt.producto_origen as producto_origen ,
                 case when ai.sii_code =61 then ail.price_subtotal*-1 else ail.price_subtotal end  as price_subtotal,
-                rp2.name as vendedor,sdc.name as tipo_documento
+                rp2.name as vendedor,sdc.name as tipo_documento,aj.id journal_id 
                 from account_invoice ai ,account_invoice_line ail,product_product pp,product_template pt,res_users ru,
-                res_partner rp,res_partner rp2,sii_document_class sdc
+                res_partner rp,res_partner rp2,sii_document_class sdc,account_journal aj 
                 where ai.id=ail.invoice_id 
+                and ai.journal_id =aj.id 
                 and ail.product_id =pp.id 
                 and pp.product_tmpl_id =pt.id 
                 and ai.user_id =ru.id 
                 and ai.partner_id =rp.id 
                 and ru.partner_id =rp2.id 
                 and ai.document_class_id =sdc.id
-                and ai.sii_code in('33','34','56','39','61')     
+                and ai.sii_code in('33','34','56','39','61')   
+                and aj.type='sale'
                 union
                 select ROW_NUMBER() OVER() AS id,
                 ai.date_invoice  as date_invoice ,
@@ -148,9 +150,9 @@ class ComisionesReport(models.Model):
                 ail.quantity as quantity,
                 pt.producto_origen as producto_origen ,
                 case when ai.sii_code =61 then ail.price_subtotal*-1 else ail.price_subtotal end  as price_subtotal,
-                rp2.name as vendedor,sdc.name as tipo_documento
+                rp2.name as vendedor,sdc.name as tipo_documento,aj2.id journal_id 
                 from account_invoice ai ,account_invoice_line ail,product_product pp,product_template pt,res_users ru,
-                res_partner rp,res_partner rp2,sii_document_class sdc  
+                res_partner rp,res_partner rp2,sii_document_class sdc,account_journal aj2  
                 where ai.id=ail.invoice_id 
                 and ail.product_id =pp.id 
                 and pp.product_tmpl_id =pt.id 
@@ -159,6 +161,7 @@ class ComisionesReport(models.Model):
                 and ru.partner_id =rp2.id 
                 and ai.document_class_id =sdc.id
                 and ai.sii_code in('56','61')
+                and aj2.type='sale'                
             )
         """ % (
             self._table
