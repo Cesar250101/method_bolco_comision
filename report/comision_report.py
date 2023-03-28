@@ -105,7 +105,7 @@ class ComisionesReport(models.Model):
     price_subtotal = fields.Integer(string='Neto',readonly=True,)
     vendedor = fields.Char(string='Vendedor')
     tipo_documento = fields.Char(string='Tipo Documento')
-    journal_id = fields.Many2one(comodel_name='comodel_name', string='Diario')
+    journal_id = fields.Many2one(comodel_name='account.journal', string='Diario')
 
 
     @api.model_cr
@@ -125,7 +125,8 @@ class ComisionesReport(models.Model):
                 ail.quantity as quantity,
                 pt.producto_origen as producto_origen ,
                 case when ai.sii_code =61 then ail.price_subtotal*-1 else ail.price_subtotal end  as price_subtotal,
-                rp2.name as vendedor,sdc.name as tipo_documento,aj.id journal_id 
+                rp2.name as vendedor,sdc.name as tipo_documento,
+                aj.id as journal_id 
                 from account_invoice ai ,account_invoice_line ail,product_product pp,product_template pt,res_users ru,
                 res_partner rp,res_partner rp2,sii_document_class sdc,account_journal aj 
                 where ai.id=ail.invoice_id 
@@ -150,7 +151,8 @@ class ComisionesReport(models.Model):
                 ail.quantity as quantity,
                 pt.producto_origen as producto_origen ,
                 case when ai.sii_code =61 then ail.price_subtotal*-1 else ail.price_subtotal end  as price_subtotal,
-                rp2.name as vendedor,sdc.name as tipo_documento,aj2.id journal_id 
+                rp2.name as vendedor,sdc.name as tipo_documento,
+                aj2.id as journal_id 
                 from account_invoice ai ,account_invoice_line ail,product_product pp,product_template pt,res_users ru,
                 res_partner rp,res_partner rp2,sii_document_class sdc,account_journal aj2  
                 where ai.id=ail.invoice_id 
